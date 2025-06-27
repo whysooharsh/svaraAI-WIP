@@ -2,11 +2,12 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 import Navbar from "./components/navbar";
 import Hero from "./pages";
 import Playground from "./pages/playground";
-import ChatInterface from "./pages/chat";
+import ChatInterface from "./pages/aichat";
+import { VoiceProvider } from "@humeai/voice-react";
 
 function AppContent() {
   const location = useLocation();
-  const hideNavbar = location.pathname === "/chat";  
+  const hideNavbar = location.pathname === "/chat";
 
   return (
     <>
@@ -15,7 +16,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Hero />} />
           <Route path="/playground" element={<Playground />} />
-          <Route path="/chat" element={<ChatInterface />} />
+          <Route path="/aichat" element={<ChatInterface />} />
         </Routes>
       </div>
     </>
@@ -23,9 +24,12 @@ function AppContent() {
 }
 
 export default function App() {
+  const apiKey = import.meta.env.VITE_HUME_API_KEY;
   return (
     <Router>
-      <AppContent />
+      <VoiceProvider auth={{ type: "apiKey", value: apiKey }}>
+        <AppContent />
+      </VoiceProvider>
     </Router>
   );
 }

@@ -17,8 +17,9 @@ export default function Hero() {
           emotional intelligence
         </span>
         <p className='text-sm text-gray-600 font-mono'>
-          "Build empathetic AI that understands human emotions through voice, text, and facial expressions"
-        </p>
+        emotionally-aware machine that doesn’t just talk, but listens.  
+          Svara understands tone, emotion, and silence.
+        </p>  
       </div>
 
       <motion.div style={{ scale, y }} className='bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-lg'>

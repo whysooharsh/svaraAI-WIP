@@ -1,4 +1,3 @@
-
 import { ChevronDown } from 'lucide-react';
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -35,9 +34,8 @@ export default function Navbar() {
           <div className='flex justify-between items-center h-16 '>
 
             <div className='flex items-center space-x-2 '>
-              <img className='max-h-6 max-w-10' src='https://logowik.com/content/uploads/images/hume-ai1720994953.logowik.com.webp' alt=' '>
-              </img>
-              <span className="text-base font-mono font-sm text-black">bruh.</span>
+              <img className='max-h-12 max-w-26' src='https://res.cloudinary.com/dpwqggym0/image/upload/v1751012836/wmremove-transformed-removebg-preview_jpl4zz.png' alt="SvaraAI logo" />
+              <span className="text-base font-mono font-sm text-black">SvaraAI</span>
             </div>
 
             {/* Desktop Menu */}
@@ -101,8 +99,7 @@ export default function Navbar() {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.1, duration: 0.4 }} className="flex justify-between items-center p-6 border-b border-gray-200">
                   <div className='flex items-center space-x-2'>
-                    <img className='max-h-6 max-w-10' src='https://logowik.com/content/uploads/images/hume-ai1720994953.logowik.com.webp' alt=' '>
-                    </img>
+                    <img className='max-h-6 max-w-10' src='https://logowik.com/content/uploads/images/hume-ai1720994953.logowik.com.webp' alt='Hume AI logo' />
                     <span className="text-base font-mono font-sm text-black">bruh.</span>
                   </div>
                   <button onClick={toggleMenu} aria-label="Close Menu">
