@@ -35,9 +35,12 @@ router.post('/', async (req,res) : Promise<any>=>{
             }),
         });
         
+        if (!response.ok) {
+            throw new Error(`Hume API request failed: ${response.status}`);
+        }
+        
         const result = await response.json();
         res.json(result);
-
     }
     catch(err){
         console.log(err);

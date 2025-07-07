@@ -31,7 +31,7 @@ const Messages = forwardRef<
                 <motion.div
                   role="article"
                   aria-label={`${msg.message.role} message from ${msg.receivedAt.toLocaleTimeString()}`}
-                  key={msg.type + index}
+                  key={`${msg.type}-${index}-${msg.receivedAt.getTime()}`}                  
                   className={cn(
                     "w-[80%]",
                     "bg-card",

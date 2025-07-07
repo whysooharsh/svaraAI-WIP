@@ -24,6 +24,8 @@ const CallButton: React.FC<CallButtonProps> = ({
             <button
                 onClick={onClick}
                 disabled={disabled}
+                aria-label={children ? undefined : text}
+                type="button"
                 className={`
                     flex items-center gap-2
                     px-6 py-3 rounded-full
@@ -31,8 +33,7 @@ const CallButton: React.FC<CallButtonProps> = ({
                     bg-black text-white
                     ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 `}
-            >
-                {children ? children : (<><Icon size={20} />
+            >                {children ? children : (<><Icon size={20} />
                 <span className="select-none">{text}</span></>)}
             </button>
         </div>

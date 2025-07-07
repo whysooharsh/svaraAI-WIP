@@ -1,22 +1,22 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { VoiceProvider } from "@humeai/voice-react";
 import Messages from "./message";
 import Controls from "./controls";
 import StartCall from "./startCall";
 import type { ComponentRef } from "react";
 
-interface ClientComponentProps {
-  accessToken: string;
-}
-
-const ClientComponent: React.FC<ClientComponentProps> = ({ accessToken }) => {
+export default function ChatInterface() {
+  const apiKey = import.meta.env.VITE_HUME_API_KEY;
+   if (!apiKey) {
+    return <div>Error: VITE_HUME_API_KEY environment variable is required</div>;
+  }
   const timeout = useRef<number | null>(null);
   const ref = useRef<ComponentRef<typeof Messages> | null>(null);
 
   return (
     <div className="relative grow flex flex-col mx-auto w-full overflow-hidden h-[0px]">
       <VoiceProvider
-        auth={{ type: "accessToken", value: accessToken }}
+        auth={{ type: "apiKey", value: apiKey }}
         onMessage={() => {
           if (timeout.current) {
             window.clearTimeout(timeout.current);
@@ -40,6 +40,4 @@ const ClientComponent: React.FC<ClientComponentProps> = ({ accessToken }) => {
       </VoiceProvider>
     </div>
   );
-};
-
-export default ClientComponent;
+}

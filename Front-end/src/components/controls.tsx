@@ -35,7 +35,7 @@ const Controls : React.FC = () =>{
               {isMuted ? <MicOff className="size-4" /> : <Mic className="size-4" />}
             </Toggle>
 
-            <div className="relative grid h-8 w-48 shrink grow-0">
+            <div className="relative grid h-8 w-48 shrink-0 grow-0">              
               <MicFFT fft={micFft} className="fill-current" />
             </div>
 
