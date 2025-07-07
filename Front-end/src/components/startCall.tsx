@@ -6,6 +6,14 @@ import CallButton from "../ui/button";
 export default function StartCall() {
   const { status, connect } = useVoice();
 
+  const handleConnect = async () => {
+    try {
+      await connect();
+    } catch (e) {
+      console.error("Error connecting:", e);
+    }
+  };
+
   return (
     <AnimatePresence>
       {status.value !== "connected" ? (
@@ -30,16 +38,9 @@ export default function StartCall() {
             >
               <CallButton
                 className={"z-50 flex items-center gap-1.5 rounded-full"}
-                onClick={() => {
-                  connect()
-                    .then(() => {})
-                    .catch(() => {})
-                    .finally(() => {});
-                }}
-              >
-               
-
-              </CallButton>
+                onClick={handleConnect}
+                variant="connect"
+              />
             </motion.div>
           </AnimatePresence>
         </motion.div>

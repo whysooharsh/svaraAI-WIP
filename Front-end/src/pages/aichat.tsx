@@ -1,15 +1,27 @@
 import { useEffect, useState, useRef } from "react";
 
+async function sendToGemini(transcript: string, emoData: any) {
+  const res = await fetch("/api/gemini", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ transcript, emoData }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Gemini API error");
+  }
+  return res.json();
+}
+
 export default function ChatInterface() {
   const [message, setMessage] = useState([
     {
       id: 1,
       type: "ai",
-      content: "thinking",
+      content: "Hi there",
       timestamp: new Date(),
     },
   ]);
-
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
@@ -35,17 +47,29 @@ export default function ChatInterface() {
     setInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      const data = await sendToGemini(input, {});
       const aiMessage = {
         id: Date.now() + 1,
         type: "ai",
-        content: "Got it! ✨",
+        content: data.candidates?.[0]?.content?.parts?.[0]?.text || data.message || "(No response)",
         timestamp: new Date(),
       };
 
       setMessage((prev) => [...prev, aiMessage]);
+    } catch (err: any) {
+      setMessage((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 2,
+          type: "ai",
+          content: err.message || "Error contacting Gemini API",
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1200);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -56,38 +80,31 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-neutral-800 text-white font-sans relative overflow-hidden">
-      <div className="sticky top-0 z-10 border-b border-white/20 px-8 shadow-md text-center bg-neutral-800 ">
-        <h1 className="text-3xl font-light text-neutral-400 mb-2">AI Chat</h1>
-        <p className="text-sm font-mono text-gray-600/80">Empathic conversational agent</p>
+    <div className="flex flex-col h-screen bg-neutral-900 text-white font-sans relative overflow-hidden">
+      <div className="sticky top-0 z-10 border-white/20 px-8 shadow-sm text-center bg-neutral-900 ">
+        <h1 className="text-3xl font-light text-neutral-400 mb-2 pt-6">Conversational Agent</h1>
+        
       </div>
 
       <div className="flex-1 overflow-y-auto max-w-3xl w-full mx-auto px-8 py-12 pb-32 no-scrollbar">
-          {message.map((msg) => (
-           <div key={msg.id} className={`mb-4 flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-  <div className="flex flex-col items-start max-w-[75%]">
-    <div
-      className={`p-3 rounded-xl ${
-        msg.type === "ai" ? "bg-neutral-700/80 text-white" : "bg-neutral-600 text-white"
-      }`}
-    >
-      <p className="text-sm leading-relaxed font-light">{msg.content}</p>
-    </div>
-    <div className={`text-xs font-mono text-neutral-400 mt-1 ${msg.type === 'user' ? 'text-right self-end' : ''}`}>
-      {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-    </div>
-  </div>
-</div>
-
-          ))}
-          <div ref={messageEndRef} />
+        {message.map((msg) => (
+          <div key={msg.id} className={`mb-4 flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className="flex flex-col items-start max-w-[75%]">
+              <div className={`p-3 rounded-xl ${msg.type === "ai" ? "bg-neutral-700/80 text-white" : "bg-neutral-600 text-white"}`}>
+                <p className="text-[16px] leading-relaxed font-light">{msg.content}</p>
+              </div>
+              <div className={`text-xs font-mono text-neutral-400 mt-1 ${msg.type === 'user' ? 'text-right self-end' : ''}`}>
+                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+          </div>
+        ))}
+        <div ref={messageEndRef} />
       </div>
 
-          {/* input */}
-          
+      {/* input */}
       <div className="fixed bottom-4 left-0 right-0 px-4 ">
         <div className="max-w-3xl mx-auto">
-          
           <div className="flex items-center overflow-hidden rounded-2xl backdrop-blur-3xl border border-white/20 bg-transparent shadow-xl">
             <input
               value={input}

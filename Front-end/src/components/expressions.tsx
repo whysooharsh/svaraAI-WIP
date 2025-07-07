@@ -1,4 +1,3 @@
-"use client";
 import { expressionColors } from "../utils/expressionColors";
 import expressionLabels from "../utils/expressionLabels";
 import { motion } from "framer-motion";
@@ -13,50 +12,40 @@ export default function Expressions({
   const top3 = R.pipe(
     values,
     R.entries(),
-    R.sortBy(R.pathOr([1], 0)),
+    R.sortBy(R.pathOr([1], 1)),
     R.reverse(),
     R.take(3)
   );
 
   return (
-    <div
-      className={
-        "text-xs p-3 w-full grid grid-cols-1 md:grid-cols-3 gap-3"
-      }
-    >
-      {top3.map(([key, value] : [string, number]) => (
-        <div key={key} className={"w-full overflow-hidden"}>
-          <div
-            className={"flex items-center justify-between gap-1 pb-1"}
-          >
-            <div className={"font-medium truncate tracking-tight"}>
-              {expressionLabels[key]}
+    <div className="text-xs p-3 w-full grid grid-cols-1 md:grid-cols-3 gap-3">
+      {top3.map(([key, value]: [string, number]) => (
+        <div key={key} className="w-full overflow-hidden">
+          <div className="flex items-center justify-between gap-1 pb-1">
+            <div className="font-medium truncate tracking-tight">
+              {expressionLabels[key] || key}
             </div>
-            <div className={"tabular-nums opacity-50 tracking-tight"}>{value.toFixed(2)}</div>
+            <div className="tabular-nums opacity-50 tracking-tight">
+              {value.toFixed(2)}
+            </div>
           </div>
           <div
-            className={"relative h-1"}
+            className="relative h-1"
             style={
               {
-                "--bg": expressionColors[key] ?? "var(--bg)",
+                "--bg": expressionColors[key] ?? "#6b7280",
               } as CSSProperties
             }
           >
-            <div
-              className={
-                "absolute top-0 left-0 size-full rounded-full opacity-10 bg-[var(--bg)]"
-              }
-            />
+            <div className="absolute top-0 left-0 size-full rounded-full opacity-10 bg-[var(--bg)]" />
             <motion.div
-              className={
-                "absolute top-0 left-0 h-full bg-[var(--bg)] rounded-full"
-              }
+              className="absolute top-0 left-0 h-full bg-[var(--bg)] rounded-full"
               initial={{ width: 0 }}
               animate={{
                 width: `${R.pipe(
                   value,
                   R.clamp({ min: 0, max: 1 }),
-                  (value:number) => `${value * 100}%`
+                  (value: number) => `${value * 100}%`
                 )}`,
               }}
             />

@@ -7,12 +7,13 @@ import { VoiceProvider } from "@humeai/voice-react";
 
 function AppContent() {
   const location = useLocation();
-  const hideNavbar = location.pathname === "/chat";
+  const hideNavbar = location.pathname === "/aichat";
 
   return (
     <>
       {!hideNavbar && <Navbar />}
-      <div className="min-h-screen bg-gradient-to-b from-[#efb1ae] via-[#FED5C7] to-[#FFE4C6] overflow-hidden relative">
+      {/* min-h-screen bg-[radial-gradient(circle_at_bottom_left,_#1e1e1e,_#000)] */}
+      <div className="min-h-screen bg-gradient-to-b from-[#efb1ae] via-[#FED5C7] to-[#FFE4C6]  overflow-hidden">
         <Routes>
           <Route path="/" element={<Hero />} />
           <Route path="/playground" element={<Playground />} />
@@ -25,6 +26,10 @@ function AppContent() {
 
 export default function App() {
   const apiKey = import.meta.env.VITE_HUME_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('VITE_HUME_API_KEY environment variable is required');
+  }
   return (
     <Router>
       <VoiceProvider auth={{ type: "apiKey", value: apiKey }}>
