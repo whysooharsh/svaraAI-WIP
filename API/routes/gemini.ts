@@ -19,8 +19,8 @@ router.post('/', async (req: Request, res: Response): Promise<any> => {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
--   
-+   console.error('GEMINI_API_KEY is missing from environment variables');    return res.status(500).json({ error: 'Missing Gemini API Key' });
+   
+   console.error('GEMINI_API_KEY is missing from environment variables');    return res.status(500).json({ error: 'Missing Gemini API Key' });
   }
 
 const rawPrompt = process.env.GEMINI_PROMPT;
