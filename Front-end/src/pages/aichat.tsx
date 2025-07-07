@@ -18,7 +18,7 @@ export default function ChatInterface() {
     {
       id: 1,
       type: "ai",
-      content: "Hi there",
+      content: "",
       timestamp: new Date(),
     },
   ]);
@@ -52,7 +52,10 @@ export default function ChatInterface() {
       const aiMessage = {
         id: Date.now() + 1,
         type: "ai",
-        content: data.candidates?.[0]?.content?.parts?.[0]?.text || data.message || "(No response)",
+        content:
+          data.candidates?.[0]?.content?.parts?.[0]?.text ||
+          data.message ||
+          "(No response)",
         timestamp: new Date(),
       };
 
@@ -80,21 +83,41 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-neutral-900 text-white font-sans relative overflow-hidden">
-      <div className="sticky top-0 z-10 border-white/20 px-8 shadow-sm text-center bg-neutral-900 ">
-        <h1 className="text-3xl font-light text-neutral-400 mb-2 pt-6">Conversational Agent</h1>
-        
+    <div className="flex flex-col h-screen bg-gradient-to-br from-[#FCE8E2] to-[#FEF8F6] text-[#242021] font-sans relative overflow-hidden">
+      {/* Header */}
+      <div className="sticky top-0 z-10 border-b border-[#f4d5c7] bg-[#FEF8F6]/90 px-8 text-center backdrop-blur-md shadow-sm">
+        <h1 className="text-3xl font-light text-[#242021] mb-2 pt-6">Conversational Agent</h1>
       </div>
 
+      {/* Message Area */}
       <div className="flex-1 overflow-y-auto max-w-3xl w-full mx-auto px-8 py-12 pb-32 no-scrollbar">
+        {message.length === 0 && (
+          <div className="text-center text-[#6E6059] text-sm italic mb-4">
+            Start a conversation to get a response from the assistant.
+          </div>
+        )}
         {message.map((msg) => (
-          <div key={msg.id} className={`mb-4 flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div
+            key={msg.id}
+            className={`mb-4 flex ${msg.type === "user" ? "justify-end" : "justify-start"}`}
+          >
             <div className="flex flex-col items-start max-w-[75%]">
-              <div className={`p-3 rounded-xl ${msg.type === "ai" ? "bg-neutral-700/80 text-white" : "bg-neutral-600 text-white"}`}>
-                <p className="text-[16px] leading-relaxed font-light">{msg.content}</p>
+              <div
+                className={`p-3 rounded-xl border ${msg.type === "ai"
+                    ? "bg-white/90 border-[#E07155]/30 text-[#242021]"
+                    : "bg-[#E39682]/20 text-[#242021]"
+                  }`}
+              >
+                <p className="text-[16px] leading-relaxed font-normal">{msg.content}</p>
               </div>
-              <div className={`text-xs font-mono text-neutral-400 mt-1 ${msg.type === 'user' ? 'text-right self-end' : ''}`}>
-                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              <div
+                className={`text-xs font-mono text-[#6E6059] mt-1 ${msg.type === "user" ? "text-right self-end" : ""
+                  }`}
+              >
+                {msg.timestamp.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </div>
             </div>
           </div>
@@ -102,21 +125,21 @@ export default function ChatInterface() {
         <div ref={messageEndRef} />
       </div>
 
-      {/* input */}
-      <div className="fixed bottom-4 left-0 right-0 px-4 ">
+      {/* Input Box */}
+      <div className="fixed bottom-4 left-0 right-0 px-4">
         <div className="max-w-3xl mx-auto">
-          <div className="flex items-center overflow-hidden rounded-2xl backdrop-blur-3xl border border-white/20 bg-transparent shadow-xl">
+          <div className="flex items-center overflow-hidden rounded-2xl backdrop-blur-xl border border-[#E39682]/30 bg-white/80 shadow-lg">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder="Type something..."
-              className="flex-1 backdrop-blur-xl  text-white placeholder:text-gray-400 px-4 py-4 focus:outline-none"
+              className="flex-1 bg-transparent text-[#242021] placeholder:text-[#6E6059] px-4 py-4 focus:outline-none"
             />
             <button
               onClick={handleSend}
               disabled={!input.trim() || isTyping}
-              className="backdrop-blur-xl disabled:opacity-30 px-5 py-5 text-white hover:bg-white/20 transition-all disabled:cursor-not-allowed"
+              className="bg-[#E07155] hover:bg-[#D65A3F] disabled:opacity-30 px-5 py-5 text-white transition-all disabled:cursor-not-allowed"
             >
               <svg
                 width="18"

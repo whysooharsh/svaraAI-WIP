@@ -2,8 +2,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 import Navbar from "./components/navbar";
 import Hero from "./pages";
 import Playground from "./pages/playground";
-import ChatInterface from "./pages/aichat";
-import { VoiceProvider } from "@humeai/voice-react";
+import AiChat from "./pages/aichat";
 
 function AppContent() {
   const location = useLocation();
@@ -17,7 +16,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Hero />} />
           <Route path="/playground" element={<Playground />} />
-          <Route path="/aichat" element={<ChatInterface />} />
+          <Route path="/aichat" element={<AiChat />} />
         </Routes>
       </div>
     </>
@@ -25,16 +24,9 @@ function AppContent() {
 }
 
 export default function App() {
-  const apiKey = import.meta.env.VITE_HUME_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('VITE_HUME_API_KEY environment variable is required');
-  }
   return (
     <Router>
-      <VoiceProvider auth={{ type: "apiKey", value: apiKey }}>
-        <AppContent />
-      </VoiceProvider>
+      <AppContent />
     </Router>
   );
 }

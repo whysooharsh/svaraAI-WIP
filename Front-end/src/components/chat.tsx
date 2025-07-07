@@ -14,7 +14,7 @@ export default function ChatInterface() {
   const ref = useRef<ComponentRef<typeof Messages> | null>(null);
 
   return (
-    <div className="relative grow flex flex-col mx-auto w-full overflow-hidden h-[0px]">
+    <div className="relative grow flex flex-col mx-auto w-full overflow-hidden h-screen">
       <VoiceProvider
         auth={{ type: "apiKey", value: apiKey }}
         onMessage={() => {

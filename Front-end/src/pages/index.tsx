@@ -1,7 +1,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import GetStartedBtn from "../ui/getStartedbtn";
+import GetStartedBtn from "../ui/getStartedBtn";
 
 export default function Hero() {
   const scroll = useRef(null);
