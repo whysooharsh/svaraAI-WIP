@@ -1,4 +1,12 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+
+type Message = {
+  id: number;
+  type: "user" | "ai";
+  content: string;
+  timestamp: Date;
+};
 
 async function sendToGemini(transcript: string, emoData: any) {
   const res = await fetch("/api/gemini", {
@@ -14,18 +22,11 @@ async function sendToGemini(transcript: string, emoData: any) {
 }
 
 export default function ChatInterface() {
-  const [message, setMessage] = useState([
-    {
-      id: 1,
-      type: "ai",
-      content: "",
-      timestamp: new Date(),
-    },
-  ]);
+  const [message, setMessage] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
-
+  const navigate = useNavigate();
   const scrollBelow = () => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -37,7 +38,7 @@ export default function ChatInterface() {
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    const userMessage = {
+    const userMessage: Message = {
       id: Date.now(),
       type: "user",
       content: input,
@@ -49,7 +50,7 @@ export default function ChatInterface() {
 
     try {
       const data = await sendToGemini(input, {});
-      const aiMessage = {
+      const aiMessage: Message = {
         id: Date.now() + 1,
         type: "ai",
         content:
@@ -82,11 +83,39 @@ export default function ChatInterface() {
     }
   };
 
+  const handleBack = () => {
+    navigate('/');
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-[#FCE8E2] to-[#FEF8F6] text-[#242021] font-sans relative overflow-hidden">
-      {/* Header */}
       <div className="sticky top-0 z-10 border-b border-[#f4d5c7] bg-[#FEF8F6]/90 px-8 text-center backdrop-blur-md shadow-sm">
-        <h1 className="text-3xl font-light text-[#242021] mb-2 pt-6">Conversational Agent</h1>
+        <div className="relative flex items-center justify-center py-6">
+          <button
+            onClick={handleBack}
+            className="absolute left-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-[#E39682]/20 hover:bg-[#E39682]/30 border border-[#E39682]/30 transition-all duration-200 group"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="text-[#E07155] group-hover:text-[#D65A3F] transition-colors"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+            <span className="text-[#E07155] group-hover:text-[#D65A3F] font-medium text-sm transition-colors">
+              Back
+            </span>
+          </button>
+          
+          {/* Title */}
+          <h1 className="text-3xl font-light text-[#242021]">
+            Conversational Agent
+          </h1>
+        </div>
       </div>
 
       {/* Message Area */}
@@ -103,16 +132,20 @@ export default function ChatInterface() {
           >
             <div className="flex flex-col items-start max-w-[75%]">
               <div
-                className={`p-3 rounded-xl border ${msg.type === "ai"
+                className={`p-3 rounded-xl border ${
+                  msg.type === "ai"
                     ? "bg-white/90 border-[#E07155]/30 text-[#242021]"
                     : "bg-[#E39682]/20 text-[#242021]"
-                  }`}
+                }`}
               >
-                <p className="text-[16px] leading-relaxed font-normal">{msg.content}</p>
+                <p className="text-[16px] leading-relaxed font-normal">
+                  {msg.content}
+                </p>
               </div>
               <div
-                className={`text-xs font-mono text-[#6E6059] mt-1 ${msg.type === "user" ? "text-right self-end" : ""
-                  }`}
+                className={`text-xs font-mono text-[#6E6059] mt-1 ${
+                  msg.type === "user" ? "text-right self-end" : ""
+                }`}
               >
                 {msg.timestamp.toLocaleTimeString([], {
                   hour: "2-digit",
