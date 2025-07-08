@@ -6,9 +6,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Toggle } from "../ui/toggle";
 import MicFFT from "./micFFT";
 import { cn } from "../utils"; 
+import { useNavigate } from "react-router-dom";
 
 const Controls : React.FC = () =>{
     const {disconnect, status, isMuted, unmute, mute, micFft} = useVoice();
+    const navigate = useNavigate();
+
 
     return (
         <div
@@ -41,7 +44,10 @@ const Controls : React.FC = () =>{
 
             <EndCallButton
               className="flex items-center gap-1 rounded-full"
-              onClick={disconnect}
+              onClick={()=>{
+                disconnect();
+                navigate("/playground");
+              }}
             />
           </motion.div>
         )}
