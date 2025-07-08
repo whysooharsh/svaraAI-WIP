@@ -3,11 +3,12 @@ import { VoiceProvider } from "@humeai/voice-react";
 import Messages from "./message";
 import Controls from "./controls";
 import StartCall from "./startCall";
+import EmotionProcessor from "./emotionProcessor";
 import type { ComponentRef } from "react";
 
 export default function ChatInterface() {
   const apiKey = import.meta.env.VITE_HUME_API_KEY;
-   if (!apiKey) {
+  if (!apiKey) {
     return <div>Error: VITE_HUME_API_KEY environment variable is required</div>;
   }
   const timeout = useRef<number | null>(null);
@@ -35,7 +36,13 @@ export default function ChatInterface() {
         }}
       >
         <Messages ref={ref} />
-        <Controls />
+        <EmotionProcessor />
+        <Controls
+          transcript="hello"
+          emotions={{ joy: 0.9 }}
+          geminiReply="You sound great!"
+        />
+
         <StartCall />
       </VoiceProvider>
     </div>

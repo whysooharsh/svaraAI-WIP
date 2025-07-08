@@ -1,0 +1,11 @@
+[
+  {
+    "id": "96eb3733-4374-41d8-be91-74666cb2d62f",
+    "timeStamp": 1751967551477,
+    "transcript": "hi",
+    "emotions": {
+      "joy": 0.5
+    },
+    "geminiReply": "You're happy!"
+  }
+]

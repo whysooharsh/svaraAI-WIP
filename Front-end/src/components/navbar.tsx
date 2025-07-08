@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 export default function Navbar() {
   const [isOpen, setisOpen] = useState(false);
   const [scrolled, setscrolled] = useState(false);
   const toggleMenu = () => setisOpen(!isOpen);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -15,6 +17,7 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -26,6 +29,10 @@ export default function Navbar() {
       document.body.classList.remove("overflow-hidden");
     };
   }, [isOpen]);
+
+  const handleNavigate = () => {
+    navigate("/playground");
+  }
 
   return (
     <nav
@@ -70,7 +77,9 @@ export default function Navbar() {
 
           <Link to="/playground">
             <div className="hidden md:flex items-center">
-              <button className="bg-black text-white px-2 py-2 rounded-full font-sans text-xs uppercase hover:bg-gray-800 transition-colors">
+              <button 
+              onClick={handleNavigate}
+              className="bg-black text-white px-2 py-2 rounded-full font-sans text-xs uppercase hover:bg-gray-800 transition-colors">
                 GO TO APP
               </button>
             </div>
