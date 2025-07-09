@@ -1,34 +1,114 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
+import { promises as fs } from 'fs';
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const router = express.Router();
+const ENTRIES_FILE_PATH = path.resolve(__dirname, '../data/entries.json');
+const CACHE_DURATION = 5 * 60 * 1000; 
 
-router.post('/', async (req: Request, res: Response): Promise<any> => {
-  const { transcript, emoData } = req.body;
+interface Emotions {
+  [key: string]: number;
+}
 
-  if (!transcript || typeof transcript !== 'string') {
-    return res.status(400).json({ error: 'Invalid or missing transcript' });
-  }
+interface Turn {
+  speaker: "user" | "assistant";
+  text: string;
+  timestamp: string;
+  emotions: Emotions;
+}
 
-  if (!emoData || typeof emoData !== 'object') {
-    return res.status(400).json({ error: 'Invalid or missing emotional data' });
-  }
-  const apiKey = process.env.GEMINI_API_KEY;
+interface Entry {
+  conversation_id: string;
+  timestamp_ms: number;
+  turns: Turn[];
+}
 
-  if (!apiKey) {
-   
-   console.error('GEMINI_API_KEY is missing from environment variables');    return res.status(500).json({ error: 'Missing Gemini API Key' });
-  }
+interface CacheData {
+  entries: Entry[];
+  lastUpdated: number;
+  lastModified: number;
+}
 
-const rawPrompt = process.env.GEMINI_PROMPT;
-const prompt = rawPrompt
-  ?.replace('{{transcript}}', transcript)
-  .replace('{{emoData}}', JSON.stringify(emoData));
+let entriesCache: CacheData | null = null;
 
+async function getEntriesWithCache(): Promise<Entry[]> {
   try {
+    const stats = await fs.stat(ENTRIES_FILE_PATH);
+    const fileModified = stats.mtimeMs;
+
+    if (entriesCache && 
+        Date.now() - entriesCache.lastUpdated < CACHE_DURATION &&
+        entriesCache.lastModified === fileModified) {
+      return entriesCache.entries;
+    }
+
+    const entriesData = await fs.readFile(ENTRIES_FILE_PATH, 'utf-8');
+    const entries = JSON.parse(entriesData);
+
+    entriesCache = {
+      entries,
+      lastUpdated: Date.now(),
+      lastModified: fileModified
+    };
+
+    return entries;
+  } catch (error) {
+    console.error('Error reading entries file:', error);
+    if (entriesCache) {
+      console.warn('Using cached entries as fallback');
+      return entriesCache.entries;
+    }
+    throw new Error('Unable to read entries data');
+  }
+}
+
+router.post('/', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const entries = await getEntriesWithCache();
+    const lastEntry = entries[entries.length - 1];
+
+    if (!lastEntry || !lastEntry.turns) {
+      console.error('No conversation data available');
+      res.status(400).json({ error: 'No conversation data available' });
+      return;
+    }
+
+    const latestTurn = lastEntry.turns[lastEntry.turns.length - 1];
+    if (!latestTurn) {
+      console.error('No message data available');
+      res.status(400).json({ error: 'No message data available' });
+      return;
+    }
+
+    const emotionData = latestTurn.emotions;
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error('GEMINI_API_KEY is missing from environment variables');
+      res.status(500).json({ error: 'Unable to process your request at this time' });
+      return;
+    }
+
+    const rawPrompt = process.env.GEMINI_PROMPT;
+    if (!rawPrompt) {
+      console.error('GEMINI_PROMPT is missing from environment variables');
+      res.status(500).json({ error: 'Unable to process your request at this time' });
+      return;
+    }
+
+    const formattedEmoData = Object.entries(emotionData)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([emotion, score]) => `${emotion}: ${(score * 100).toFixed(1)}%`)
+      .join('\\n');
+
+    const prompt = rawPrompt
+      .replace('{{transcript}}', latestTurn.text)
+      .replace('{{emoData}}', formattedEmoData);
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
@@ -37,17 +117,18 @@ const prompt = rawPrompt
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: prompt
-                },
-              ],
-            },
-          ],
-        }),
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.3,
+            topK: 20,
+            topP: 0.8,
+            maxOutputTokens: 100,
+          }
+        })
       }
     );
 
@@ -55,13 +136,28 @@ const prompt = rawPrompt
 
     if (!response.ok) {
       console.error('[Gemini API Error]', data);
-      return res.status(response.status).json({ error: 'Gemini API request failed', details: data });
+      res.status(response.status).json({
+        error: 'Unable to process your request at this time'
+      });
+      return;
     }
 
-    return res.status(200).json(data);
+    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      res.json({
+        response: data.candidates[0].content.parts[0].text,
+        emotions: emotionData
+      });
+    } else {
+      console.error('Unexpected Gemini response structure:', data);
+      res.status(500).json({ 
+        error: 'Unable to process your request at this time'
+      });
+    }
   } catch (error: any) {
-    console.error('[Gemini API Error] An error occurred while processing the Gemini API request.', error);
-    return res.status(500).json({ error: 'An unexpected error occurred.', details: error.message });
+    console.error('[Gemini API Error] An error occurred:', error);
+    res.status(500).json({
+      error: 'Unable to process your request at this time'
+    });
   }
 });
 

@@ -1,24 +1,32 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
+type Emotion = {
+  emotion: string;
+  score: number;
+};
+
 type Message = {
   id: number;
   type: "user" | "ai";
   content: string;
   timestamp: Date;
+  emotions?: Emotion[];
 };
 
-async function sendToGemini(transcript: string, emoData: any) {
-  const res = await fetch("/api/gemini", {
+async function sendToGemini(transcript: string, emoData: Record<string, number>) {
+  const res = await fetch("http://localhost:5000/api/gemini", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ transcript, emoData }),
   });
+  
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || "Gemini API error");
   }
-  return res.json();
+  const data = await res.json();
+  return data;
 }
 
 export default function ChatInterface() {
@@ -53,10 +61,7 @@ export default function ChatInterface() {
       const aiMessage: Message = {
         id: Date.now() + 1,
         type: "ai",
-        content:
-          data.candidates?.[0]?.content?.parts?.[0]?.text ||
-          data.message ||
-          "(No response)",
+        content: data.response || "(No response)",
         timestamp: new Date(),
       };
 
@@ -111,14 +116,12 @@ export default function ChatInterface() {
             </span>
           </button>
           
-          {/* Title */}
           <h1 className="text-3xl font-light text-[#242021]">
             Conversational Agent
           </h1>
         </div>
       </div>
 
-      {/* Message Area */}
       <div className="flex-1 overflow-y-auto max-w-3xl w-full mx-auto px-8 py-12 pb-32 no-scrollbar">
         {message.length === 0 && (
           <div className="text-center text-[#6E6059] text-sm italic mb-4">
@@ -158,7 +161,6 @@ export default function ChatInterface() {
         <div ref={messageEndRef} />
       </div>
 
-      {/* Input Box */}
       <div className="fixed bottom-4 left-0 right-0 px-4">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center overflow-hidden rounded-2xl backdrop-blur-xl border border-[#E39682]/30 bg-white/80 shadow-lg">

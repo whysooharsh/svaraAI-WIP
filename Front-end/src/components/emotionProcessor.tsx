@@ -1,118 +1,75 @@
 import { useEffect, useRef, useState } from "react";
 import { useVoice } from "@humeai/voice-react";
-import * as R from "remeda";
 
-async function getGeminiReply(transcript: string, emoData: Record<string, number>) {
-  try {
-    const res = await fetch("http://localhost:3000/api/gemini", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transcript, emoData }),
-    });
-    return await res.json();
-  } catch (e) {
-    console.error("Error getting response from Gemini:", e);
-    return null;
-  }
+function debounce(func: Function, wait: number) {
+  let timeout: NodeJS.Timeout;
+  return function executedFunction(...args: any[]) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
 
-async function saveEntry({
-  transcript,
-  emotionSummary,
-  geminiReply,
-}: {
-  transcript: string;
-  emotionSummary: Record<string, number>;
-  geminiReply: any;
-}) {
+async function saveConversation(messages: any[]) {
   try {
-    const res = await fetch("http://localhost:3000/api/save-entry", {
+    const res = await fetch("http://localhost:5000/api/save-entry", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        transcript,
-        emotions: emotionSummary,
-        geminiReply,
-      }),
+      body: JSON.stringify({ messages }),
     });
-    return await res.json();
-  } catch (e) {
-    console.error("Error saving entry:", e);
+
+    const data = await res.json();
+    console.log("Saved conversation:", data);
+
+    const geminiRes = await fetch("http://localhost:5000/api/gemini", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages }),
+    });
+
+    const geminiData = await geminiRes.json();
+    if (geminiData.response) {
+      console.log("Gemini's analysis:", geminiData.response);
+      return geminiData.response;
+    }
+  } catch (err) {
+    console.error("Error in conversation processing:", err);
   }
 }
-
-type VoiceMessage = ReturnType<typeof useVoice>["messages"][number];
-type InferredUserMessage = Extract<VoiceMessage, { type: "user_message" }>;
 
 function EmotionProcessor() {
   const { messages } = useVoice();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const lastProcessedMessage = useRef<Date | null>(null);
+  const lastSavedMessageId = useRef<string | null>(null);
+  const [geminiResponse, setGeminiResponse] = useState<string | null>(null);
+  const debouncedSave = useRef(
+    debounce(async (msgs: any[]) => {
+      const response = await saveConversation(msgs);
+      if (response) setGeminiResponse(response);
+    }, 2000)
+  ).current;
 
   useEffect(() => {
-    const processEmotion = async () => {
+    if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
-      console.log(messages);
+      const messageId = lastMessage?.type === 'user_message' || lastMessage?.type === 'assistant_message'
+        ? `${lastMessage.receivedAt}-${lastMessage.message?.content}`
+        : null;
 
-      if (
-        lastMessage?.type === "assistant_message" &&
-        !isProcessing &&
-        (!lastProcessedMessage.current || lastMessage.receivedAt > lastProcessedMessage.current)
-      ) {
-        const userMessages = messages.filter(
-          (m): m is InferredUserMessage =>
-            m.type === "user_message" &&
-            !!m.models.prosody?.scores &&
-            typeof m.message.content === "string" &&
-            (!lastProcessedMessage.current || m.receivedAt > lastProcessedMessage.current)
-        );
-
-        if (userMessages.length > 0) {
-          setIsProcessing(true);
-          lastProcessedMessage.current = lastMessage.receivedAt;
-
-          const transcript = userMessages
-            .map((m) => m.message.content)
-            .join(" ")
-            .trim();
-
-          const allScores = userMessages.flatMap(
-            (m) => m.models.prosody?.scores ? [m.models.prosody.scores] : []
-          );
-
-          if (transcript && allScores.length > 0) {
-            const allEmotionEntries = R.flatMap(allScores, (scores) => R.entries(scores));
-            const emotionsGrouped = R.groupBy(allEmotionEntries, ([emotion]) => emotion);
-            const emotionSummary = R.mapValues(emotionsGrouped, (entries) =>
-              R.meanBy(entries, ([, score]) => score)
-            );
-
-            console.log("Transcript:", transcript);
-            console.log("Emotion summary:", emotionSummary);
-
-            const geminiReply = await getGeminiReply(transcript, emotionSummary);
-            console.log("✅ Transcript:", transcript);
-            console.log("✅ Emotion Summary:", emotionSummary);
-            console.log("✅ Gemini Reply:", geminiReply);
-
-            if (geminiReply) {
-              await saveEntry({
-                transcript,
-                emotionSummary,
-                geminiReply,
-              });
-            }
-          }
-
-          setIsProcessing(false);
-        }
+      if (messageId && messageId !== lastSavedMessageId.current) {
+        lastSavedMessageId.current = messageId;
+        debouncedSave(messages);
       }
-    };
+    }
+  }, [messages, debouncedSave]);
 
-    processEmotion();
-  }, [messages, isProcessing]);
+  if (geminiResponse) {
+    return <div className="gemini-response">{geminiResponse}</div>;
+  }
+
   return null;
 }
 
 export default EmotionProcessor;
-
