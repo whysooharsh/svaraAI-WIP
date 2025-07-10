@@ -67,23 +67,14 @@ async function getEntriesWithCache(): Promise<Entry[]> {
 
 router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
-    const entries = await getEntriesWithCache();
-    const lastEntry = entries[entries.length - 1];
+    const { transcript, emoData } = req.body;
 
-    if (!lastEntry || !lastEntry.turns) {
-      console.error('No conversation data available');
-      res.status(400).json({ error: 'No conversation data available' });
+    if (!transcript) {
+      console.error('No transcript provided');
+      res.status(400).json({ error: 'Transcript is required' });
       return;
     }
-
-    const latestTurn = lastEntry.turns[lastEntry.turns.length - 1];
-    if (!latestTurn) {
-      console.error('No message data available');
-      res.status(400).json({ error: 'No message data available' });
-      return;
-    }
-
-    const emotionData = latestTurn.emotions;
+    const emotionData = emoData || {};
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -100,13 +91,13 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     }
 
     const formattedEmoData = Object.entries(emotionData)
-      .sort(([, a], [, b]) => b - a)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
       .slice(0, 3)
-      .map(([emotion, score]) => `${emotion}: ${(score * 100).toFixed(1)}%`)
+      .map(([emotion, score]) => `${emotion}: ${((score as number) * 100).toFixed(1)}%`)
       .join('\\n');
 
     const prompt = rawPrompt
-      .replace('{{transcript}}', latestTurn.text)
+      .replace('{{transcript}}', transcript)
       .replace('{{emoData}}', formattedEmoData);
 
     const response = await fetch(
